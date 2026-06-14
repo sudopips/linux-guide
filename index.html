@@ -10,196 +10,307 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: monospace; background: #0d1117; color: #c9d1d9; }
-    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-    h1 { text-align: center; color: #58a6ff; margin-bottom: 20px; font-size: 1.8rem; }
-    input { width: 100%; padding: 10px; background: #161b22; border: 1px solid #30363d;
-            color: #c9d1d9; border-radius: 6px; font-size: 1rem; margin-bottom: 20px; }
-    .category { margin-bottom: 24px; }
-    .category h2 { color: #f78166; margin-bottom: 10px; font-size: 1.1rem; }
-    .cmd { background: #161b22; border: 1px solid #30363d; border-radius: 6px;
-           padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
-    .cmd-left { flex: 1; }
-    .cmd code { color: #79c0ff; font-size: 0.95rem; display: block; margin-bottom: 4px; }
-    .cmd .desc { color: #8b949e; font-size: 0.85rem; }
+    .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; color: #58a6ff; margin-bottom: 8px; font-size: 1.8rem; }
+    .subtitle { text-align: center; color: #8b949e; font-size: 0.85rem; margin-bottom: 20px; font-family: sans-serif; }
+    .search-bar { width: 100%; padding: 10px 14px; background: #161b22; border: 1px solid #30363d;
+                  color: #c9d1d9; border-radius: 6px; font-size: 1rem; margin-bottom: 16px; }
+    .search-bar:focus { outline: none; border-color: #58a6ff; }
+
+    /* Tabs */
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .tab { padding: 6px 14px; border-radius: 20px; border: 1px solid #30363d;
+           background: #161b22; color: #8b949e; cursor: pointer; font-size: 0.82rem;
+           font-family: monospace; transition: all 0.15s; }
+    .tab:hover { border-color: #58a6ff; color: #58a6ff; }
+    .tab.active { background: #1f3a5c; border-color: #58a6ff; color: #58a6ff; }
+    .tab.fav-tab { border-color: #f0c040; color: #f0c040; }
+    .tab.fav-tab.active { background: #3a2e00; }
+
+    /* Category */
+    .category { margin-bottom: 28px; }
+    .category h2 { color: #f78166; margin-bottom: 12px; font-size: 1rem;
+                   border-bottom: 1px solid #21262d; padding-bottom: 6px; }
+
+    /* Command Card */
+    .cmd { background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+           padding: 12px 14px; margin-bottom: 8px; }
+    .cmd-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .cmd code { color: #79c0ff; font-size: 0.95rem; }
+    .cmd-actions { display: flex; gap: 6px; }
     .copy-btn { background: #21262d; border: 1px solid #30363d; color: #c9d1d9;
-                padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 8px; }
+                padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 0.78rem; }
     .copy-btn:hover { background: #30363d; }
-    .no-result { text-align: center; color: #8b949e; padding: 40px; }
+    .copy-btn.copied { border-color: #3fb950; color: #3fb950; }
+    .fav-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 2px 4px; }
+    .desc-en { color: #8b949e; font-size: 0.83rem; margin-bottom: 2px; }
+    .desc-fa { color: #c9a84c; font-size: 0.83rem; font-family: sans-serif; direction: rtl; }
+    .example { margin-top: 6px; background: #0d1117; border-right: 3px solid #30363d;
+               padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; color: #6e7681; }
+    .example span { color: #3fb950; }
+
+    .no-result { text-align: center; color: #8b949e; padding: 40px; font-family: sans-serif; }
+    .count { color: #8b949e; font-size: 0.8rem; margin-bottom: 12px; font-family: sans-serif; }
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
+
 const data = [
   {
     category: "Navigation",
     commands: [
-      { cmd: "pwd", desc: "Print current directory" },
-      { cmd: "ls", desc: "List files" },
-      { cmd: "ls -la", desc: "List all files with details" },
-      { cmd: "cd ~", desc: "Go to home directory" },
-      { cmd: "cd ..", desc: "Go up one level" },
-      { cmd: "cd /path/to/dir", desc: "Go to specific directory" },
+      { cmd: "pwd", desc: "Print current directory", fa: "نمایش مسیر فعلی", example: "$ pwd\n/home/user/projects" },
+      { cmd: "ls", desc: "List files", fa: "لیست فایل‌ها", example: "$ ls\ndocs  index.html  README.md" },
+      { cmd: "ls -la", desc: "List all files with details", fa: "لیست کامل با جزئیات و فایل‌های مخفی", example: "$ ls -la\ndrwxr-xr-x 2 user user 4096 Jun 14 .ssh" },
+      { cmd: "cd ~", desc: "Go to home directory", fa: "رفتن به پوشه خانگی کاربر", example: "$ cd ~\n$ pwd\n/home/user" },
+      { cmd: "cd ..", desc: "Go up one level", fa: "رفتن به پوشه بالاتر", example: "$ cd .." },
+      { cmd: "cd /path/to/dir", desc: "Go to specific directory", fa: "رفتن به مسیر مشخص", example: "$ cd /var/www/html" },
     ]
   },
   {
     category: "File Operations",
     commands: [
-      { cmd: "touch file.txt", desc: "Create empty file" },
-      { cmd: "cp file.txt copy.txt", desc: "Copy a file" },
-      { cmd: "mv file.txt /path/", desc: "Move or rename file" },
-      { cmd: "rm file.txt", desc: "Delete a file" },
-      { cmd: "rm -rf folder/", desc: "Delete folder recursively" },
-      { cmd: "mkdir new_folder", desc: "Create directory" },
-      { cmd: "mkdir -p a/b/c", desc: "Create nested directories" },
+      { cmd: "touch file.txt", desc: "Create empty file", fa: "ساخت فایل خالی", example: "$ touch notes.txt" },
+      { cmd: "cp file.txt copy.txt", desc: "Copy a file", fa: "کپی کردن فایل", example: "$ cp config.json config.backup.json" },
+      { cmd: "cp -r dir1/ dir2/", desc: "Copy directory recursively", fa: "کپی کامل یک پوشه", example: "$ cp -r project/ project_backup/" },
+      { cmd: "mv file.txt /path/", desc: "Move or rename file", fa: "جابجایی یا تغییر نام فایل", example: "$ mv old_name.txt new_name.txt" },
+      { cmd: "rm file.txt", desc: "Delete a file", fa: "حذف فایل", example: "$ rm temp.txt" },
+      { cmd: "rm -rf folder/", desc: "Delete folder recursively", fa: "حذف کامل پوشه (خطرناک!)", example: "$ rm -rf node_modules/" },
+      { cmd: "mkdir new_folder", desc: "Create directory", fa: "ساخت پوشه جدید", example: "$ mkdir src" },
+      { cmd: "mkdir -p a/b/c", desc: "Create nested directories", fa: "ساخت چند پوشه تودرتو", example: "$ mkdir -p project/src/components" },
     ]
   },
   {
     category: "Viewing Files",
     commands: [
-      { cmd: "cat file.txt", desc: "Print file content" },
-      { cmd: "less file.txt", desc: "Scroll through file" },
-      { cmd: "head -n 10 file.txt", desc: "Show first 10 lines" },
-      { cmd: "tail -n 10 file.txt", desc: "Show last 10 lines" },
-      { cmd: "tail -f log.txt", desc: "Live-follow a log file" },
+      { cmd: "cat file.txt", desc: "Print file content", fa: "نمایش محتوای فایل", example: "$ cat .env\nDB_HOST=localhost" },
+      { cmd: "less file.txt", desc: "Scroll through file", fa: "اسکرول در فایل (q برای خروج)", example: "$ less /var/log/syslog" },
+      { cmd: "head -n 10 file.txt", desc: "Show first 10 lines", fa: "نمایش ۱۰ خط اول", example: "$ head -n 5 app.log" },
+      { cmd: "tail -n 10 file.txt", desc: "Show last 10 lines", fa: "نمایش ۱۰ خط آخر", example: "$ tail -n 20 error.log" },
+      { cmd: "tail -f log.txt", desc: "Live-follow a log file", fa: "نمایش زنده لاگ (مثل watch)", example: "$ tail -f /var/log/nginx/access.log" },
     ]
   },
   {
     category: "Search",
     commands: [
-      { cmd: "grep 'text' file.txt", desc: "Search text in file" },
-      { cmd: "grep -r 'text' ./", desc: "Recursive search in directory" },
-      { cmd: "find / -name 'file.txt'", desc: "Find file by name" },
-      { cmd: "find . -type f -name '*.log'", desc: "Find all .log files" },
-      { cmd: "locate filename", desc: "Fast file search (uses index)" },
+      { cmd: "grep 'text' file.txt", desc: "Search text in file", fa: "جستجوی متن در فایل", example: "$ grep 'error' app.log" },
+      { cmd: "grep -r 'text' ./", desc: "Recursive search in directory", fa: "جستجو در تمام فایل‌های پوشه", example: "$ grep -r 'TODO' ./src" },
+      { cmd: "grep -i 'text' file", desc: "Case-insensitive search", fa: "جستجو بدون توجه به بزرگی/کوچکی حروف", example: "$ grep -i 'error' app.log" },
+      { cmd: "find / -name 'file.txt'", desc: "Find file by name", fa: "پیدا کردن فایل با نام", example: "$ find /home -name '*.conf'" },
+      { cmd: "find . -type f -name '*.log'", desc: "Find all .log files", fa: "پیدا کردن فایل‌های log", example: "$ find /var -type f -name '*.log'" },
     ]
   },
   {
     category: "Permissions",
     commands: [
-      { cmd: "chmod 755 file.sh", desc: "Set execute permissions" },
-      { cmd: "chmod +x file.sh", desc: "Make file executable" },
-      { cmd: "chown user:group file", desc: "Change file owner" },
-      { cmd: "sudo command", desc: "Run as superuser" },
+      { cmd: "chmod 755 file.sh", desc: "Set rwxr-xr-x permissions", fa: "تنظیم دسترسی: اجرا برای همه", example: "$ chmod 755 deploy.sh" },
+      { cmd: "chmod +x file.sh", desc: "Make file executable", fa: "قابل اجرا کردن فایل", example: "$ chmod +x install.sh\n$ ./install.sh" },
+      { cmd: "chmod 600 file", desc: "Owner read/write only", fa: "فقط خواندن/نوشتن برای مالک", example: "$ chmod 600 ~/.ssh/id_rsa" },
+      { cmd: "chown user:group file", desc: "Change file owner", fa: "تغییر مالک فایل", example: "$ chown www-data:www-data /var/www/html" },
+      { cmd: "sudo command", desc: "Run as superuser", fa: "اجرا با دسترسی root", example: "$ sudo apt install nginx" },
     ]
   },
   {
     category: "Processes",
     commands: [
-      { cmd: "ps aux", desc: "List all running processes" },
-      { cmd: "top", desc: "Interactive process monitor" },
-      { cmd: "htop", desc: "Nicer process monitor (install needed)" },
-      { cmd: "kill PID", desc: "Kill process by ID" },
-      { cmd: "kill -9 PID", desc: "Force kill process" },
-      { cmd: "killall name", desc: "Kill all processes by name" },
-      { cmd: "bg", desc: "Resume job in background" },
-      { cmd: "fg", desc: "Bring job to foreground" },
-      { cmd: "jobs", desc: "List background jobs" },
+      { cmd: "ps aux", desc: "List all running processes", fa: "لیست تمام پردازه‌های در حال اجرا", example: "$ ps aux | grep nginx" },
+      { cmd: "top", desc: "Interactive process monitor", fa: "مانیتور تعاملی پردازه‌ها", example: "$ top" },
+      { cmd: "htop", desc: "Better process monitor", fa: "نسخه بهتر top (نیاز به نصب)", example: "$ sudo apt install htop && htop" },
+      { cmd: "kill PID", desc: "Kill process by ID", fa: "خاتمه دادن پردازه با ID", example: "$ kill 1234" },
+      { cmd: "kill -9 PID", desc: "Force kill process", fa: "اجبار به خاتمه پردازه", example: "$ kill -9 1234" },
+      { cmd: "killall name", desc: "Kill all processes by name", fa: "خاتمه تمام پردازه‌های با این نام", example: "$ killall node" },
+      { cmd: "command &", desc: "Run command in background", fa: "اجرای دستور در پس‌زمینه", example: "$ python server.py &\n[1] 5678" },
+      { cmd: "jobs", desc: "List background jobs", fa: "لیست کارهای پس‌زمینه", example: "$ jobs\n[1]+ Running  python server.py" },
+      { cmd: "fg %1", desc: "Bring job to foreground", fa: "آوردن کار به پیش‌زمینه", example: "$ fg %1" },
     ]
   },
   {
     category: "Networking",
     commands: [
-      { cmd: "ping google.com", desc: "Test network connection" },
-      { cmd: "curl -I https://site.com", desc: "Check HTTP response headers" },
-      { cmd: "wget https://url/file", desc: "Download a file" },
-      { cmd: "ip addr", desc: "Show IP addresses" },
-      { cmd: "netstat -tuln", desc: "Show open ports" },
-      { cmd: "ss -tuln", desc: "Modern alternative to netstat" },
-      { cmd: "ssh user@host", desc: "Connect via SSH" },
-      { cmd: "scp file user@host:/path", desc: "Copy file over SSH" },
+      { cmd: "ping google.com", desc: "Test network connection", fa: "تست اتصال شبکه", example: "$ ping -c 4 google.com" },
+      { cmd: "curl -I https://site.com", desc: "Check HTTP headers", fa: "بررسی هدرهای HTTP", example: "$ curl -I https://github.com" },
+      { cmd: "curl -X POST -d 'data' url", desc: "Send POST request", fa: "ارسال درخواست POST", example: "$ curl -X POST -d '{\"key\":\"val\"}' api.example.com" },
+      { cmd: "wget https://url/file", desc: "Download a file", fa: "دانلود فایل از اینترنت", example: "$ wget https://example.com/file.zip" },
+      { cmd: "ip addr", desc: "Show IP addresses", fa: "نمایش آدرس‌های IP", example: "$ ip addr show eth0" },
+      { cmd: "ss -tuln", desc: "Show open ports", fa: "نمایش پورت‌های باز", example: "$ ss -tuln | grep :80" },
+      { cmd: "ssh user@host", desc: "Connect via SSH", fa: "اتصال از طریق SSH", example: "$ ssh admin@192.168.1.10" },
+      { cmd: "scp file user@host:/path", desc: "Copy file over SSH", fa: "کپی فایل از طریق SSH", example: "$ scp backup.tar.gz user@server:/home/user/" },
     ]
   },
   {
     category: "Disk & Memory",
     commands: [
-      { cmd: "df -h", desc: "Disk usage (human readable)" },
-      { cmd: "du -sh folder/", desc: "Folder size" },
-      { cmd: "free -h", desc: "RAM usage" },
-      { cmd: "lsblk", desc: "List block devices" },
-      { cmd: "mount /dev/sdb1 /mnt", desc: "Mount a device" },
+      { cmd: "df -h", desc: "Disk usage (human readable)", fa: "نمایش فضای دیسک", example: "$ df -h\n/dev/sda1  20G  8G  12G  40% /" },
+      { cmd: "du -sh folder/", desc: "Folder size", fa: "اندازه پوشه", example: "$ du -sh node_modules/\n250M  node_modules/" },
+      { cmd: "free -h", desc: "RAM usage", fa: "نمایش مصرف RAM", example: "$ free -h\nMem: 7.7G  3.2G  2.1G" },
+      { cmd: "lsblk", desc: "List block devices", fa: "لیست دستگاه‌های ذخیره‌سازی", example: "$ lsblk" },
     ]
   },
   {
-    category: "Package Management (Debian/Ubuntu)",
+    category: "Package Management",
     commands: [
-      { cmd: "sudo apt update", desc: "Update package list" },
-      { cmd: "sudo apt upgrade", desc: "Upgrade all packages" },
-      { cmd: "sudo apt install pkg", desc: "Install a package" },
-      { cmd: "sudo apt remove pkg", desc: "Remove a package" },
-      { cmd: "apt search pkg", desc: "Search for a package" },
+      { cmd: "sudo apt update", desc: "Update package list", fa: "به‌روزرسانی لیست بسته‌ها", example: "$ sudo apt update" },
+      { cmd: "sudo apt upgrade", desc: "Upgrade all packages", fa: "ارتقاء تمام بسته‌ها", example: "$ sudo apt upgrade -y" },
+      { cmd: "sudo apt install pkg", desc: "Install a package", fa: "نصب یک بسته", example: "$ sudo apt install git curl vim" },
+      { cmd: "sudo apt remove pkg", desc: "Remove a package", fa: "حذف یک بسته", example: "$ sudo apt remove apache2" },
+      { cmd: "apt search pkg", desc: "Search for a package", fa: "جستجو برای یک بسته", example: "$ apt search python3" },
+      { cmd: "dpkg -l | grep pkg", desc: "Check if package installed", fa: "بررسی نصب بودن بسته", example: "$ dpkg -l | grep nginx" },
+    ]
+  },
+  {
+    category: "Git",
+    commands: [
+      { cmd: "git init", desc: "Initialize a repository", fa: "ساخت مخزن Git جدید", example: "$ git init\nInitialized empty Git repository" },
+      { cmd: "git clone url", desc: "Clone a repository", fa: "کلون کردن مخزن", example: "$ git clone https://github.com/user/repo.git" },
+      { cmd: "git status", desc: "Show working tree status", fa: "وضعیت فایل‌های تغییر یافته", example: "$ git status\nmodified: index.html" },
+      { cmd: "git add .", desc: "Stage all changes", fa: "آماده کردن تمام تغییرات", example: "$ git add .\n$ git add src/app.js" },
+      { cmd: "git commit -m 'msg'", desc: "Commit staged changes", fa: "ذخیره تغییرات با پیام", example: "$ git commit -m 'feat: add search feature'" },
+      { cmd: "git push origin main", desc: "Push to remote", fa: "آپلود تغییرات به سرور", example: "$ git push origin main" },
+      { cmd: "git pull", desc: "Pull latest changes", fa: "دریافت آخرین تغییرات", example: "$ git pull origin main" },
+      { cmd: "git log --oneline", desc: "Compact commit history", fa: "تاریخچه commit‌ها به شکل فشرده", example: "$ git log --oneline\na3f2b1 fix: navbar bug\nb4e9c0 feat: dark mode" },
+      { cmd: "git branch -a", desc: "List all branches", fa: "لیست تمام شاخه‌ها", example: "$ git branch -a" },
+      { cmd: "git checkout -b feature", desc: "Create and switch branch", fa: "ساخت و رفتن به شاخه جدید", example: "$ git checkout -b feature/login" },
     ]
   },
   {
     category: "Archives",
     commands: [
-      { cmd: "tar -czf out.tar.gz folder/", desc: "Create .tar.gz archive" },
-      { cmd: "tar -xzf file.tar.gz", desc: "Extract .tar.gz" },
-      { cmd: "zip -r out.zip folder/", desc: "Create zip archive" },
-      { cmd: "unzip file.zip", desc: "Extract zip" },
+      { cmd: "tar -czf out.tar.gz folder/", desc: "Create .tar.gz archive", fa: "ساخت آرشیو فشرده", example: "$ tar -czf backup.tar.gz /var/www/" },
+      { cmd: "tar -xzf file.tar.gz", desc: "Extract .tar.gz", fa: "استخراج آرشیو", example: "$ tar -xzf backup.tar.gz" },
+      { cmd: "zip -r out.zip folder/", desc: "Create zip archive", fa: "ساخت فایل zip", example: "$ zip -r project.zip src/" },
+      { cmd: "unzip file.zip", desc: "Extract zip", fa: "استخراج فایل zip", example: "$ unzip project.zip -d ./output" },
     ]
   },
   {
     category: "Text Processing",
     commands: [
-      { cmd: "echo 'text'", desc: "Print text" },
-      { cmd: "cat f1 f2 > merged.txt", desc: "Merge files" },
-      { cmd: "sort file.txt", desc: "Sort lines alphabetically" },
-      { cmd: "uniq file.txt", desc: "Remove duplicate lines" },
-      { cmd: "wc -l file.txt", desc: "Count lines in file" },
-      { cmd: "cut -d',' -f1 file.csv", desc: "Extract first column from CSV" },
-      { cmd: "sed 's/old/new/g' file", desc: "Replace text in file" },
-      { cmd: "awk '{print $1}' file", desc: "Print first column" },
+      { cmd: "echo 'text'", desc: "Print text", fa: "چاپ متن در ترمینال", example: "$ echo 'Hello World'\nHello World" },
+      { cmd: "sort file.txt", desc: "Sort lines alphabetically", fa: "مرتب‌سازی خطوط", example: "$ sort names.txt" },
+      { cmd: "uniq file.txt", desc: "Remove duplicate lines", fa: "حذف خطوط تکراری", example: "$ sort file.txt | uniq" },
+      { cmd: "wc -l file.txt", desc: "Count lines in file", fa: "شمارش خطوط فایل", example: "$ wc -l app.log\n1024 app.log" },
+      { cmd: "sed 's/old/new/g' file", desc: "Replace text in file", fa: "جایگزینی متن در فایل", example: "$ sed 's/localhost/example.com/g' config.txt" },
+      { cmd: "awk '{print $1}' file", desc: "Print first column", fa: "چاپ ستون اول", example: "$ awk '{print $1}' /etc/passwd" },
     ]
   },
   {
     category: "System Info",
     commands: [
-      { cmd: "uname -a", desc: "Kernel and system info" },
-      { cmd: "hostname", desc: "Show hostname" },
-      { cmd: "whoami", desc: "Current user" },
-      { cmd: "uptime", desc: "System uptime" },
-      { cmd: "date", desc: "Current date and time" },
-      { cmd: "cal", desc: "Calendar" },
-      { cmd: "history", desc: "Command history" },
+      { cmd: "uname -a", desc: "Kernel and system info", fa: "اطلاعات کامل سیستم و کرنل", example: "$ uname -a\nLinux host 5.15.0 #1 SMP x86_64 GNU/Linux" },
+      { cmd: "whoami", desc: "Current user", fa: "نام کاربر فعلی", example: "$ whoami\nuser" },
+      { cmd: "uptime", desc: "System uptime", fa: "مدت زمان روشن بودن سیستم", example: "$ uptime\n up 3 days, 4:20, 2 users" },
+      { cmd: "date", desc: "Current date and time", fa: "تاریخ و زمان فعلی", example: "$ date\nSat Jun 14 19:00:00 UTC 2026" },
+      { cmd: "history", desc: "Command history", fa: "تاریخچه دستورات اجرا شده", example: "$ history | tail -5" },
+      { cmd: "history | grep cmd", desc: "Search command history", fa: "جستجو در تاریخچه دستورات", example: "$ history | grep git" },
     ]
   },
 ];
 
+const ALL_CATS = data.map(d => d.category);
+
 function App() {
   const [search, setSearch] = React.useState("");
+  const [activeTab, setActiveTab] = React.useState("All");
+  const [favorites, setFavorites] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem("fav_cmds") || "[]"); }
+    catch { return []; }
+  });
+  const [copied, setCopied] = React.useState("");
 
-  const filtered = data.map(cat => ({
-    ...cat,
-    commands: cat.commands.filter(c =>
-      c.cmd.toLowerCase().includes(search.toLowerCase()) ||
-      c.desc.toLowerCase().includes(search.toLowerCase())
-    )
-  })).filter(cat => cat.commands.length > 0);
+  const saveFavs = (favs) => {
+    setFavorites(favs);
+    localStorage.setItem("fav_cmds", JSON.stringify(favs));
+  };
+
+  const toggleFav = (cmd) => {
+    const next = favorites.includes(cmd)
+      ? favorites.filter(f => f !== cmd)
+      : [...favorites, cmd];
+    saveFavs(next);
+  };
 
   const copy = (text) => {
     navigator.clipboard.writeText(text).catch(() => {});
+    setCopied(text);
+    setTimeout(() => setCopied(""), 1500);
   };
+
+  let filtered = data;
+  if (activeTab === "Favorites") {
+    filtered = data.map(cat => ({
+      ...cat,
+      commands: cat.commands.filter(c => favorites.includes(c.cmd))
+    })).filter(cat => cat.commands.length > 0);
+  } else if (activeTab !== "All") {
+    filtered = data.filter(cat => cat.category === activeTab);
+  }
+
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    filtered = filtered.map(cat => ({
+      ...cat,
+      commands: cat.commands.filter(c =>
+        c.cmd.toLowerCase().includes(q) ||
+        c.desc.toLowerCase().includes(q) ||
+        (c.fa && c.fa.includes(search))
+      )
+    })).filter(cat => cat.commands.length > 0);
+  }
+
+  const totalCmds = filtered.reduce((s, c) => s + c.commands.length, 0);
 
   return (
     <div className="container">
-      <h1>Linux Command Guide</h1>
+      <h1>⚡ Linux Command Guide</h1>
+      <p className="subtitle">راهنمای دستورات لینوکس با توضیحات فارسی</p>
       <input
-        placeholder="Search commands..."
+        className="search-bar"
+        placeholder="جستجو... (فارسی یا انگلیسی)"
         value={search}
         onChange={e => setSearch(e.target.value)}
       />
-      {filtered.length === 0 && <div className="no-result">No commands found.</div>}
+      <div className="tabs">
+        <button className={"tab fav-tab" + (activeTab === "Favorites" ? " active" : "")}
+          onClick={() => setActiveTab("Favorites")}>
+          ★ Favorites ({favorites.length})
+        </button>
+        <button className={"tab" + (activeTab === "All" ? " active" : "")}
+          onClick={() => setActiveTab("All")}>All</button>
+        {ALL_CATS.map(cat => (
+          <button key={cat} className={"tab" + (activeTab === cat ? " active" : "")}
+            onClick={() => setActiveTab(cat)}>{cat}</button>
+        ))}
+      </div>
+
+      <div className="count">{totalCmds} دستور</div>
+
+      {filtered.length === 0 && <div className="no-result">دستوری پیدا نشد.</div>}
       {filtered.map(cat => (
         <div className="category" key={cat.category}>
           <h2>{cat.category}</h2>
           {cat.commands.map(c => (
             <div className="cmd" key={c.cmd}>
-              <div className="cmd-left">
+              <div className="cmd-top">
                 <code>{c.cmd}</code>
-                <span className="desc">{c.desc}</span>
+                <div className="cmd-actions">
+                  <button className="fav-btn" onClick={() => toggleFav(c.cmd)}
+                    title={favorites.includes(c.cmd) ? "Remove from favorites" : "Add to favorites"}>
+                    {favorites.includes(c.cmd) ? "★" : "☆"}
+                  </button>
+                  <button className={"copy-btn" + (copied === c.cmd ? " copied" : "")}
+                    onClick={() => copy(c.cmd)}>
+                    {copied === c.cmd ? "✓" : "Copy"}
+                  </button>
+                </div>
               </div>
-              <button className="copy-btn" onClick={() => copy(c.cmd)}>Copy</button>
+              <div className="desc-en">{c.desc}</div>
+              {c.fa && <div className="desc-fa">{c.fa}</div>}
+              {c.example && (
+                <div className="example">
+                  <span>$ </span>{c.example.replace(/^\$ /, "")}
+                </div>
+              )}
             </div>
           ))}
         </div>
