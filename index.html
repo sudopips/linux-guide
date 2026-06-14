@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Linux Command Guide</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; background: #0d1117; color: #c9d1d9; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; color: #58a6ff; margin-bottom: 20px; font-size: 1.8rem; }
+    input { width: 100%; padding: 10px; background: #161b22; border: 1px solid #30363d;
+            color: #c9d1d9; border-radius: 6px; font-size: 1rem; margin-bottom: 20px; }
+    .category { margin-bottom: 24px; }
+    .category h2 { color: #f78166; margin-bottom: 10px; font-size: 1.1rem; }
+    .cmd { background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+           padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .cmd-left { flex: 1; }
+    .cmd code { color: #79c0ff; font-size: 0.95rem; display: block; margin-bottom: 4px; }
+    .cmd .desc { color: #8b949e; font-size: 0.85rem; }
+    .copy-btn { background: #21262d; border: 1px solid #30363d; color: #c9d1d9;
+                padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 8px; }
+    .copy-btn:hover { background: #30363d; }
+    .no-result { text-align: center; color: #8b949e; padding: 40px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const data = [
+  {
+    category: "Navigation",
+    commands: [
+      { cmd: "pwd", desc: "Print current directory" },
+      { cmd: "ls", desc: "List files" },
+      { cmd: "ls -la", desc: "List all files with details" },
+      { cmd: "cd ~", desc: "Go to home directory" },
+      { cmd: "cd ..", desc: "Go up one level" },
+      { cmd: "cd /path/to/dir", desc: "Go to specific directory" },
+    ]
+  },
+  {
+    category: "File Operations",
+    commands: [
+      { cmd: "touch file.txt", desc: "Create empty file" },
+      { cmd: "cp file.txt copy.txt", desc: "Copy a file" },
+      { cmd: "mv file.txt /path/", desc: "Move or rename file" },
+      { cmd: "rm file.txt", desc: "Delete a file" },
+      { cmd: "rm -rf folder/", desc: "Delete folder recursively" },
+      { cmd: "mkdir new_folder", desc: "Create directory" },
+      { cmd: "mkdir -p a/b/c", desc: "Create nested directories" },
+    ]
+  },
+  {
+    category: "Viewing Files",
+    commands: [
+      { cmd: "cat file.txt", desc: "Print file content" },
+      { cmd: "less file.txt", desc: "Scroll through file" },
+      { cmd: "head -n 10 file.txt", desc: "Show first 10 lines" },
+      { cmd: "tail -n 10 file.txt", desc: "Show last 10 lines" },
+      { cmd: "tail -f log.txt", desc: "Live-follow a log file" },
+    ]
+  },
+  {
+    category: "Search",
+    commands: [
+      { cmd: "grep 'text' file.txt", desc: "Search text in file" },
+      { cmd: "grep -r 'text' ./", desc: "Recursive search in directory" },
+      { cmd: "find / -name 'file.txt'", desc: "Find file by name" },
+      { cmd: "find . -type f -name '*.log'", desc: "Find all .log files" },
+      { cmd: "locate filename", desc: "Fast file search (uses index)" },
+    ]
+  },
+  {
+    category: "Permissions",
+    commands: [
+      { cmd: "chmod 755 file.sh", desc: "Set execute permissions" },
+      { cmd: "chmod +x file.sh", desc: "Make file executable" },
+      { cmd: "chown user:group file", desc: "Change file owner" },
+      { cmd: "sudo command", desc: "Run as superuser" },
+    ]
+  },
+  {
+    category: "Processes",
+    commands: [
+      { cmd: "ps aux", desc: "List all running processes" },
+      { cmd: "top", desc: "Interactive process monitor" },
+      { cmd: "htop", desc: "Nicer process monitor (install needed)" },
+      { cmd: "kill PID", desc: "Kill process by ID" },
+      { cmd: "kill -9 PID", desc: "Force kill process" },
+      { cmd: "killall name", desc: "Kill all processes by name" },
+      { cmd: "bg", desc: "Resume job in background" },
+      { cmd: "fg", desc: "Bring job to foreground" },
+      { cmd: "jobs", desc: "List background jobs" },
+    ]
+  },
+  {
+    category: "Networking",
+    commands: [
+      { cmd: "ping google.com", desc: "Test network connection" },
+      { cmd: "curl -I https://site.com", desc: "Check HTTP response headers" },
+      { cmd: "wget https://url/file", desc: "Download a file" },
+      { cmd: "ip addr", desc: "Show IP addresses" },
+      { cmd: "netstat -tuln", desc: "Show open ports" },
+      { cmd: "ss -tuln", desc: "Modern alternative to netstat" },
+      { cmd: "ssh user@host", desc: "Connect via SSH" },
+      { cmd: "scp file user@host:/path", desc: "Copy file over SSH" },
+    ]
+  },
+  {
+    category: "Disk & Memory",
+    commands: [
+      { cmd: "df -h", desc: "Disk usage (human readable)" },
+      { cmd: "du -sh folder/", desc: "Folder size" },
+      { cmd: "free -h", desc: "RAM usage" },
+      { cmd: "lsblk", desc: "List block devices" },
+      { cmd: "mount /dev/sdb1 /mnt", desc: "Mount a device" },
+    ]
+  },
+  {
+    category: "Package Management (Debian/Ubuntu)",
+    commands: [
+      { cmd: "sudo apt update", desc: "Update package list" },
+      { cmd: "sudo apt upgrade", desc: "Upgrade all packages" },
+      { cmd: "sudo apt install pkg", desc: "Install a package" },
+      { cmd: "sudo apt remove pkg", desc: "Remove a package" },
+      { cmd: "apt search pkg", desc: "Search for a package" },
+    ]
+  },
+  {
+    category: "Archives",
+    commands: [
+      { cmd: "tar -czf out.tar.gz folder/", desc: "Create .tar.gz archive" },
+      { cmd: "tar -xzf file.tar.gz", desc: "Extract .tar.gz" },
+      { cmd: "zip -r out.zip folder/", desc: "Create zip archive" },
+      { cmd: "unzip file.zip", desc: "Extract zip" },
+    ]
+  },
+  {
+    category: "Text Processing",
+    commands: [
+      { cmd: "echo 'text'", desc: "Print text" },
+      { cmd: "cat f1 f2 > merged.txt", desc: "Merge files" },
+      { cmd: "sort file.txt", desc: "Sort lines alphabetically" },
+      { cmd: "uniq file.txt", desc: "Remove duplicate lines" },
+      { cmd: "wc -l file.txt", desc: "Count lines in file" },
+      { cmd: "cut -d',' -f1 file.csv", desc: "Extract first column from CSV" },
+      { cmd: "sed 's/old/new/g' file", desc: "Replace text in file" },
+      { cmd: "awk '{print $1}' file", desc: "Print first column" },
+    ]
+  },
+  {
+    category: "System Info",
+    commands: [
+      { cmd: "uname -a", desc: "Kernel and system info" },
+      { cmd: "hostname", desc: "Show hostname" },
+      { cmd: "whoami", desc: "Current user" },
+      { cmd: "uptime", desc: "System uptime" },
+      { cmd: "date", desc: "Current date and time" },
+      { cmd: "cal", desc: "Calendar" },
+      { cmd: "history", desc: "Command history" },
+    ]
+  },
+];
+
+function App() {
+  const [search, setSearch] = React.useState("");
+
+  const filtered = data.map(cat => ({
+    ...cat,
+    commands: cat.commands.filter(c =>
+      c.cmd.toLowerCase().includes(search.toLowerCase()) ||
+      c.desc.toLowerCase().includes(search.toLowerCase())
+    )
+  })).filter(cat => cat.commands.length > 0);
+
+  const copy = (text) => {
+    navigator.clipboard.writeText(text).catch(() => {});
+  };
+
+  return (
+    <div className="container">
+      <h1>Linux Command Guide</h1>
+      <input
+        placeholder="Search commands..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+      {filtered.length === 0 && <div className="no-result">No commands found.</div>}
+      {filtered.map(cat => (
+        <div className="category" key={cat.category}>
+          <h2>{cat.category}</h2>
+          {cat.commands.map(c => (
+            <div className="cmd" key={c.cmd}>
+              <div className="cmd-left">
+                <code>{c.cmd}</code>
+                <span className="desc">{c.desc}</span>
+              </div>
+              <button className="copy-btn" onClick={() => copy(c.cmd)}>Copy</button>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
